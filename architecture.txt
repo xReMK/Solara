@@ -1,0 +1,124 @@
+Local Queue + TCP/WebSocket
+
+# Go CLI queues notes locally (channels/goroutines), syncs via TCP/localhost or HTTP to Boot; Boot uses WebSockets for real-time UI push. Offline-first
+
+# Event-driven; showcases Go strengths (TCP/channels); resilient (queue survives crashes); real-time UI. Best for phone/laptop 24x7 terminal
+
+# telegram bot? 
+
+# Opt for local queue + TCP/WebSocket—best balance for learning/showcase
+Why? Mirrors production event systems (e.g., notification services at product cos), uses your Go exp directly (TCP connections, goroutines for queue processing)
+and Spring Boot shines in async/reactive (WebSockets via STOMP)
+
+# High-Level Flow:
+
+- Go CLI: Runs daemon; mnote add #tag -m "text" → goroutine enqueues to channel → background goroutine batches TCP sends to Boot every 5s or on flush.
+- Spring Boot: TCP listener service (netty or simple socket) receives batches, persists to Postgres (JPA, tags as JSON array), pushes via WebSocket to UI clients.
+- UI: Simple React/Vue (or Thymeleaf) at /ui for search/filter by tag.
+- Auth: JWT for CLI/UI; tags auto-categorize (e.g., #philosophy1 appends to existing).
+- Future: AWS S3 for note backups (add SDK hands-on)
+
+Implementation Steps
+
+- Setup Spring Boot (Day 1-2) : Maven project; dependencies: spring-boot-starter-web, websocket, security, data-jpa, PostgreSQL
+                                Entity: Note (id, timestamp, tags[], message, type). Repos/Services/Controllers. Add @Async TCP receiver (use java.net.Socket)
+- Postgres Shema: Tables      : notes (id UUID, created_at, tags JSONB, message TEXT, type ENUM).
+- Go CLI (Day 3-5)            : go mod init mnote; flags (cobra/viper for cmds). Channels: noteChan := make(chan Note); goroutine listener batches/sends TCP. Commands: add, list, delete, flush.
+- Integration                 : CLI connects to localhost:8080 TCP; Boot parses JSON batches, saves, broadcasts WS.
+- UI & Polish (Day 6-7)       : Basic frontend with tag search (filter via API). Add validation, logging, unit/integration tests (80% coverage).
+- Testing/Deploy              : Local run (java -jar, go run); profile perf. GitHub repo with README (screenshots, arch diagram)
+
+
+___________________________________________________________________________________++++++++++++++++++  Springboot  +++++++++++++++++++++++__________________________________________________________________________________________________
+
+## Springboot - solara.mnote
+
+# dependencies - spring web, websocket, spring security, spring data jpa, postgresSql driver
+
+
+
+
+
+
+
+___________________________________________________________________________________++++++++++++++++++  pgadmin4  +++++++++++++++++++++++__________________________________________________________________________________________________
+
+
+# spring.datasource.username=mithi
+spring.datasource.password=1234
+
+
+
+
+
+   ___________________________________________________________________________________++++++++++++++++++  go  +++++++++++++++++++++++__________________________________________________________________________________________________
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
