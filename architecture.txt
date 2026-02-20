@@ -28,6 +28,11 @@ Implementation Steps
 - UI & Polish (Day 6-7)       : Basic frontend with tag search (filter via API). Add validation, logging, unit/integration tests (80% coverage).
 - Testing/Deploy              : Local run (java -jar, go run); profile perf. GitHub repo with README (screenshots, arch diagram)
 
+# lets take the 3rd option
+here what if i get asked, why did you create a go service here? why didnt you just entirely use java & spring? what issue did using go has solved or gained here?
+
+
+
 
 ___________________________________________________________________________________++++++++++++++++++  Springboot  +++++++++++++++++++++++__________________________________________________________________________________________________
 
