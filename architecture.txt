@@ -31,7 +31,27 @@ Implementation Steps
 # lets take the 3rd option
 here what if i get asked, why did you create a go service here? why didnt you just entirely use java & spring? what issue did using go has solved or gained here?
 
+# since you have the flow down, would you like to see how to implement a Circular Buffer in your Go channel? 
+This would prevent the daemon from running out of memory if it can't reach Spring Boot
 
+# add loggables, file logging method, standard for daemons
+
+# SyncNotes from multiple devices
+
+# wal (write ahead log)
+	Receive note via Pipe.
+		First: Write it to a local pending.json or wal.log.
+		Second: Push it to the Go Memory Queue.
+		Third: Send ACK to the Client.
+	If the machine dies at Step 2, the file system might recover it. If it dies at Step 1, the Client knows it failed (no ACK)
+
+# Future-Proofing (Scaling)
+Because you used a Queue (Channel), scaling is easy:
+Parallelism: If you want to send notes to 5 different backends at once, you just start 5 springWorker goroutines
+Spring Side: If traffic grows, you can add Redis in front of Postgres to act as a buffer on the Java side
+
+# type Note struct{
+}
 
 
 ___________________________________________________________________________________++++++++++++++++++  Springboot  +++++++++++++++++++++++__________________________________________________________________________________________________
@@ -59,7 +79,31 @@ spring.datasource.password=1234
    ___________________________________________________________________________________++++++++++++++++++  go  +++++++++++++++++++++++__________________________________________________________________________________________________
    
 
+func (p *program) springWorker() {
+	for note := range p.queue {
+		p.postToSpring(note)
+	}
+	/*
+		By using for note := range p.queue, Go handles the sleeping/waking of the thread for you
+		If the queue is empty, the springWorker goroutine is "parked" by the Go scheduler and consumes zero CPU
+		When a note arrives, the scheduler wakes it up. This is much more efficient than a while(true) loop in Java
+	*/
+}
 
+var serverCmd = &cobra.Command{
+	Use: "server",
+	Run: func(cmd *cobra.Command, args []string) {
+		s, _ := getService()
+
+		// This is the crucial part.
+		// s.Run() tells the Go program:
+		// "Wait here and listen for Windows Service signals (Stop/Shutdown)."
+		// It stays at this line for days/weeks until the PC shuts down.
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	},
+}
 
 
 
