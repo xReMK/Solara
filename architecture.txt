@@ -106,9 +106,44 @@ var serverCmd = &cobra.Command{
 }
 
 
+### The entire purpose of s.Run() is to listen indefinitely for Windows SCM commands
+	- If you exited immediately, there'd be no way for SCM to communicate with your service
+	- SCM needs the process to stay alive and responding
 
+s.Run() = Blocking (waits for SCM)
+p.Start() = Non-blocking (spawns background work)
+p.run() = Blocking (endless loop listening on pipe)
 
+s.Run() blocks at event loop
+  ├─ Calls p.Start() when needed
+  │   └─ p.Start() calls go p.run() (non-blocking)
+  │       └─ p.run() blocks in its own for loop
+  │
+  └─ Returns only when SCM says STOP
 
+type program struct {
+    queue chan string
+}
+
+// ✅ MUST implement (from service.Interface)
+func (p *program) Start(s service.Service) error { }   // Called when SCM sends START
+func (p *program) Stop(s service.Service) error { }    // Called when SCM sends STOP
+
+// ❌ OPTIONAL (not part of interface)
+func (p *program) Pause(s service.Service) error { }   // Pause support
+func (p *program) Resume(s service.Service) error { }  // Resume support
+
+Windows SCM sends command
+  ↓
+s.Run() receives it
+  ↓
+Routes to appropriate handler:
+  ├─ START (1) → p.Start() called
+  ├─ STOP (1) → p.Stop() called
+  ├─ PAUSE (2) → p.Pause() called (if implemented)
+  ├─ CONTINUE (3) → p.Resume() called (if implemented)
+  ├─ INTERROGATE (4) → Library handles (status check)
+  └─ SHUTDOWN (5) → p.Stop() called
 
 
 

@@ -6,9 +6,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"net/http"
+)
+
+// ============================================================================
+// GLOBAL SINGLETON INSTANCE
+// ============================================================================
+
+var (
+	globalNoteManager *NoteManager
+	noteMgrMutex      sync.Mutex
 )
 
 // ============================================================================
@@ -48,6 +58,24 @@ func NewNoteManager(queue chan string, filePath string, springURL string) *NoteM
 		SpringURL:   springURL,
 		TimeoutSecs: 10 * time.Second,
 	}
+}
+
+// ============================================================================
+// GLOBAL SINGLETON GETTER & SETTER
+// ============================================================================
+
+// SetNoteManager sets the global singleton NoteManager instance (call once at startup)
+func SetNoteManager(nm *NoteManager) {
+	noteMgrMutex.Lock()
+	defer noteMgrMutex.Unlock()
+	globalNoteManager = nm
+}
+
+// GetNoteManager returns the global singleton NoteManager instance (thread-safe)
+func GetNoteManager() *NoteManager {
+	noteMgrMutex.Lock()
+	defer noteMgrMutex.Unlock()
+	return globalNoteManager
 }
 
 // ============================================================================
@@ -114,13 +142,7 @@ func (nm *NoteManager) AddToFile(content string) error {
 
 // AddToQueue sends a note to the processing queue for background workers
 func (nm *NoteManager) AddToQueue(content string) {
-	select {
-	case nm.Queue <- content:
-		// Successfully added to queue
-	default:
-		// Queue is full, log warning but don't block
-		fmt.Printf("Warning: Note queue is full, skipping queue addition\n")
-	}
+	nm.Queue <- content
 }
 
 // ============================================================================

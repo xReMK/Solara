@@ -48,6 +48,7 @@ func getService() (service.Service, error) {
 
 func (p *program) Start(s service.Service) error {
 	// Must be non-blocking; run the Pipe Listener in a goroutine
+	fmt.Printf("Service started from *p program")
 	go p.run()
 	return nil
 }
@@ -64,6 +65,9 @@ func (p *program) Stop(s service.Service) error {
 
 func (p *program) run() {
 	p.queue = make(chan string, 100)
+
+	noteManager := notes.NewNoteManager(p.queue, "notes.txt", "http://localhost:8080/api/notes")
+	notes.SetNoteManager(noteManager)
 
 	config := &winio.PipeConfig{
 		SecurityDescriptor: "D:P(A;;GA;;;AU)", // Allows Authenticated Users to write to the pipe
@@ -91,8 +95,7 @@ func (p *program) handleConnection(conn net.Conn) {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 
-	// Initialize NoteManager for processing incoming notes
-	noteManager := notes.NewNoteManager(p.queue, "notes.txt", "http://localhost:8080/api/notes")
+	noteManager := notes.GetNoteManager()
 
 	for scanner.Scan() {
 		data := scanner.Text()
@@ -102,6 +105,7 @@ func (p *program) handleConnection(conn net.Conn) {
 			continue
 		}
 		logger.Info("Successfully processed note: %s\n", data)
+		fmt.Printf("Successfully processed note: %s\n", data)
 	}
 
 	resp, err := http.Get("http://localhost:8080/hello")
