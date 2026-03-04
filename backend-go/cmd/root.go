@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mnote/database"
 	"mnote/internal/notes"
 	"net"
 	"net/http"
@@ -68,6 +69,9 @@ func (p *program) run() {
 
 	noteManager := notes.NewNoteManager(p.queue, "notes.txt", "http://localhost:8080/api/notes")
 	notes.SetNoteManager(noteManager)
+
+	dbm := database.Initialize("data.db", "file:data.db?_pragma=journal_mode(WAL)&_pragma=synchronous=NORMAL&_pragma=busy_timeout(5000)")
+	notes.SetDBManager(dbm)
 
 	config := &winio.PipeConfig{
 		SecurityDescriptor: "D:P(A;;GA;;;AU)", // Allows Authenticated Users to write to the pipe

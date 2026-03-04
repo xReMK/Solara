@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"mnote/database"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,6 +20,7 @@ import (
 var (
 	globalNoteManager *NoteManager
 	noteMgrMutex      sync.Mutex
+	dbm               *database.DBManager
 )
 
 // ============================================================================
@@ -60,6 +62,12 @@ func NewNoteManager(queue chan string, filePath string, springURL string) *NoteM
 	}
 }
 
+func SetDBManager(manager *database.DBManager) {
+	noteMgrMutex.Lock()
+	defer noteMgrMutex.Unlock()
+	dbm = manager
+}
+
 // ============================================================================
 // GLOBAL SINGLETON GETTER & SETTER
 // ============================================================================
@@ -82,8 +90,6 @@ func GetNoteManager() *NoteManager {
 // MAIN PROCESSING WORKFLOW
 // ============================================================================
 
-// ProcessNote coordinates the complete workflow: file storage, queue addition, Spring request, and acknowledgement
-// Returns error if the entire workflow fails, nil on success
 func (nm *NoteManager) ProcessNote(content string) error {
 	// 1. Add to text file
 	if err := nm.AddToFile(content); err != nil {
@@ -111,7 +117,6 @@ func (nm *NoteManager) ProcessNote(content string) error {
 // FILE OPERATIONS
 // ============================================================================
 
-// AddToFile appends a note to the notes text file with timestamp
 func (nm *NoteManager) AddToFile(content string) error {
 	// Ensure directory exists
 	dir := filepath.Dir(nm.FilePath)
@@ -140,7 +145,6 @@ func (nm *NoteManager) AddToFile(content string) error {
 // QUEUE OPERATIONS
 // ============================================================================
 
-// AddToQueue sends a note to the processing queue for background workers
 func (nm *NoteManager) AddToQueue(content string) {
 	nm.Queue <- content
 }
@@ -149,7 +153,6 @@ func (nm *NoteManager) AddToQueue(content string) {
 // SPRING BOOT INTEGRATION
 // ============================================================================
 
-// SendToSpring sends a note to the Spring Boot API with proper timeout handling
 func (nm *NoteManager) SendToSpring(content string) error {
 	data := NoteRequest{
 		Content:   content,
