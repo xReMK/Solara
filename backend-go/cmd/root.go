@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"mnote/internal/notes"
+	"mnote/models"
 	"net"
 	"os"
 	"strings"
@@ -24,7 +25,8 @@ import (
 var logger service.Logger
 
 type program struct {
-	queue chan string
+	queue       chan models.NoteRequest
+	failedQueue chan models.NoteRequest
 }
 
 func getService() (service.Service, error) {
@@ -62,9 +64,10 @@ func (p *program) Stop(s service.Service) error {
 // ============================================================================
 
 func (p *program) run() {
-	p.queue = make(chan string, 100)
+	p.queue = make(chan models.NoteRequest, 100)
+	p.failedQueue = make(chan models.NoteRequest, 100)
 
-	noteManager := notes.NewNoteManager(p.queue, "http://localhost:8080/api/notes")
+	noteManager := notes.NewNoteManager(p.queue, p.failedQueue, "http://localhost:8080/api/notes")
 	notes.SetNoteManager(noteManager)
 
 	noteManager.Initialize()
@@ -104,8 +107,6 @@ func (p *program) handleConnection(conn net.Conn) {
 			logger.Info("Error processing note: %v\n", err)
 			continue
 		}
-		logger.Info("Successfully processed note: %s\n", data)
-		fmt.Printf("Successfully processed note: %s\n", data)
 	}
 
 }

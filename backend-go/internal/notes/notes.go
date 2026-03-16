@@ -20,18 +20,20 @@ var (
 )
 
 type NoteManager struct {
-	Queue       chan string
+	Queue       chan models.NoteRequest
+	FailedQueue chan models.NoteRequest
 	SpringURL   string
 	TimeoutSecs time.Duration
 }
 
-func NewNoteManager(queue chan string, springURL string) *NoteManager {
+func NewNoteManager(queue chan models.NoteRequest, failedQueue chan models.NoteRequest, springURL string) *NoteManager {
 	if springURL == "" {
 		springURL = "http://localhost:8080/api/notes"
 	}
 
 	return &NoteManager{
 		Queue:       queue,
+		FailedQueue: failedQueue,
 		SpringURL:   springURL,
 		TimeoutSecs: 10 * time.Second,
 	}
@@ -64,16 +66,22 @@ func (nm *NoteManager) ProcessNote(content string) error {
 		Tag:       "general",
 	}
 
-	resDb := dbm.InsertNote(noteReq)
-	if resDb == "OK" {
+	resDb, lastId := dbm.InsertNote(noteReq)
+	if resDb == "OK" && lastId != 0 {
 		fmt.Println("Note inserted successfully in DB")
 	} else {
 		//should retry or add to notes_failed.txt or notesFailed queue/channel
 	}
 
 	if err := nm.SendToSpring(noteReq); err != nil {
+		nm.FailedQueue <- noteReq
 		return fmt.Errorf("failed to send note to Spring: %w", err)
+	} else {
+		//update sentToSpring note status as true
+		dbm.UpdateNote(lastId, models.UpdateNoteOptions{SentToSpring: models.Ptr(true)})
 	}
+
+	fmt.Println("Note sent to Spring service")
 
 	return nil
 }
@@ -103,4 +111,10 @@ func (nm *NoteManager) SendToSpring(noteReq models.NoteRequest) error {
 	}
 
 	return nil
+}
+
+func (nm *NoteManager) ProcessFailedNotes() {
+	for note := range nm.FailedQueue {
+		fmt.Println(note)
+	}
 }

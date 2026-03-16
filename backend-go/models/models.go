@@ -6,3 +6,15 @@ type NoteRequest struct {
 	Timestamp string `json:"timestamp"`
 	Tag       string `json:"tag"`
 }
+
+// UpdateNoteOptions for flexible updates (only provided fields are updated)
+type UpdateNoteOptions struct {
+	Content      *string
+	Tag          *string
+	SentToSpring *bool
+}
+
+// Ptr returns a pointer to the given value (helper for creating optional fields)
+func Ptr[T any](v T) *T {
+	return &v
+}
