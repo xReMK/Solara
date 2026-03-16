@@ -6,12 +6,9 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"log"
-	"mnote/database"
 	"mnote/internal/notes"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 
@@ -67,11 +64,10 @@ func (p *program) Stop(s service.Service) error {
 func (p *program) run() {
 	p.queue = make(chan string, 100)
 
-	noteManager := notes.NewNoteManager(p.queue, "notes.txt", "http://localhost:8080/api/notes")
+	noteManager := notes.NewNoteManager(p.queue, "http://localhost:8080/api/notes")
 	notes.SetNoteManager(noteManager)
 
-	dbm := database.Initialize("data.db", "file:data.db?_pragma=journal_mode(WAL)&_pragma=synchronous=NORMAL&_pragma=busy_timeout(5000)")
-	notes.SetDBManager(dbm)
+	noteManager.Initialize()
 
 	config := &winio.PipeConfig{
 		SecurityDescriptor: "D:P(A;;GA;;;AU)", // Allows Authenticated Users to write to the pipe
@@ -111,24 +107,6 @@ func (p *program) handleConnection(conn net.Conn) {
 		logger.Info("Successfully processed note: %s\n", data)
 		fmt.Printf("Successfully processed note: %s\n", data)
 	}
-
-	resp, err := http.Get("http://localhost:8080/hello")
-	if err != nil {
-		logger.Info("Error:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Info("Error reading body:", err)
-		return
-	}
-
-	// Print the response
-	logger.Info("Status:", resp.Status)
-	logger.Info("Body:", string(body))
 
 }
 

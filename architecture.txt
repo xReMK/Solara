@@ -228,7 +228,10 @@ FULL: SQLite will fsync() every single time you commit. This is slower but "bull
 
 
 
-
+# Exec vs Query:
+db.Exec(): Used for operations that don't return rows (INSERT, UPDATE, DELETE, CREATE).
+db.QueryRow(): Used when you expect exactly one row.
+db.Query(): Used for multiple rows (requires iterating with rows.Next())
 
 
 
