@@ -49,7 +49,7 @@ func (dbm *DBManager) InsertNote(note models.NoteRequest) (string, int64) {
 
 	// placeholders (?) to prevent SQL injection
 	res, err := db.Exec("INSERT INTO NotesTable(note, tag, created_at) VALUES(?, ?, ?)",
-		note.Content, note.Tag, note.Timestamp)
+		note.Content, note.Tag, note.CreatedAt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,6 +92,7 @@ func (dbm *DBManager) UpdateNote(id int64, opts models.UpdateNoteOptions) error 
 	return err
 }
 
+/*
 func (dbm *DBManager) DeleteNoteByID(id int64) error {
 	// Simple, specific method
 }
@@ -106,3 +107,4 @@ type GetNoteOptions struct {
 func (dbm *DBManager) GetNotes(opts GetNoteOptions) ([]models.NoteRequest, error) {
 	// Build WHERE clauses dynamically
 }
+*/

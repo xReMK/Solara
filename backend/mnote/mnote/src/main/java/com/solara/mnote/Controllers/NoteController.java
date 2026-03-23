@@ -1,6 +1,6 @@
-package com.solara.mnote.Controllers;
+package com.solara.mnote.controllers;
 
-import com.solara.mnote.Models.NoteRequest;
+import com.solara.mnote.models.dto.NoteRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

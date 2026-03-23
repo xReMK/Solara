@@ -62,7 +62,7 @@ func (nm *NoteManager) Initialize() {
 func (nm *NoteManager) ProcessNote(content string) error {
 	noteReq := models.NoteRequest{
 		Content:   content,
-		Timestamp: time.Now().Format(time.RFC3339),
+		CreatedAt: time.Now().Format(time.RFC3339),
 		Tag:       "general",
 	}
 

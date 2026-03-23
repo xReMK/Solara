@@ -90,7 +90,7 @@ It’s the easiest way to get "database-grade" durability without setting up an 
 You treat it as a local "Outbox" table: insert at receipt, delete after Spring success
 
 
-
+- MCP server + RAG(spatial databases)
 
 
 ___________________________________________________________________________________++++++++++++++++++  Springboot  +++++++++++++++++++++++__________________________________________________________________________________________________
@@ -99,7 +99,7 @@ ________________________________________________________________________________
 
 # dependencies - spring web, websocket, spring security, spring data jpa, postgresSql driver
 
-
+Days 1-3: Persistence Context & Dirty Checking. Implement the Note entity. Understand why you shouldn't call repository.save() inside a transaction (Dirty Checking)
 
 
 
