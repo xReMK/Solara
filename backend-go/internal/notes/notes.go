@@ -59,12 +59,8 @@ func (nm *NoteManager) Initialize() {
 	dbm.OpenDB()
 }
 
-func (nm *NoteManager) ProcessNote(content string) error {
-	noteReq := models.NoteRequest{
-		Content:   content,
-		CreatedAt: time.Now().Format(time.RFC3339),
-		Tag:       "general",
-	}
+func (nm *NoteManager) ProcessNote(note models.NoteRequest) error {
+	noteReq := note
 
 	resDb, lastId := dbm.InsertNote(noteReq)
 	if resDb == "OK" && lastId != 0 {

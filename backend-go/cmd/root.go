@@ -5,13 +5,16 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"mnote/internal/notes"
 	"mnote/models"
+	"mnote/utils"
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/kardianos/service"
@@ -22,7 +25,11 @@ import (
 // SECTION 1: DATA TYPES AND SERVICE INITIALIZATION
 // ============================================================================
 
-var logger service.Logger
+var (
+	logger     service.Logger
+	tagList    []string
+	importance string
+)
 
 type program struct {
 	queue       chan models.NoteRequest
@@ -101,9 +108,19 @@ func (p *program) handleConnection(conn net.Conn) {
 	noteManager := notes.GetNoteManager()
 
 	for scanner.Scan() {
-		data := scanner.Text()
+		rawBytes := scanner.Bytes()
 
-		if err := noteManager.ProcessNote(data); err != nil {
+		var receivedNote models.NoteRequest
+
+		err := json.Unmarshal(rawBytes, &receivedNote)
+		if err != nil {
+			log.Printf("Error decoding JSON: %v. Raw data: %s", err, string(rawBytes))
+			continue
+		}
+
+		log.Printf("Received Note: %+v\n", receivedNote)
+
+		if err := noteManager.ProcessNote(receivedNote); err != nil {
 			logger.Info("Error processing note: %v\n", err)
 			continue
 		}
@@ -210,7 +227,19 @@ var addCmd = &cobra.Command{
 }
 
 func addCmdRun(cmd *cobra.Command, args []string) {
-	note := strings.Join(args, " ")
+
+	if len(args) == 0 {
+		fmt.Println("Error, please provide note content")
+	}
+
+	note := models.NoteRequest{
+		Content:    strings.Join(args, " "),
+		Tags:       utils.CleanNoteTags(tagList),
+		Importance: utils.ParseNoteImportance(importance),
+		CreatedAt:  time.Now().Format(time.RFC3339),
+	}
+
+	payload, _ := json.Marshal(note)
 
 	// Use winio.DialPipe for native Windows Pipe handling
 	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
@@ -220,7 +249,10 @@ func addCmdRun(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	fmt.Fprintf(conn, "%s\n", note)
+	// --- Sending to Daemon here ---
+	// appending a \n because Daemon's bufio.Scanner looks for it
+	// to know the message is complete.
+	fmt.Fprintf(conn, "%s\n", string(payload))
 }
 
 // ============================================================================
@@ -242,4 +274,6 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")
+	addCmd.Flags().StringVarP(&importance, "imp", "i", "", "Importance level (*, **, or ***)")
 }
