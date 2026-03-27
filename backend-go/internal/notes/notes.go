@@ -62,20 +62,22 @@ func (nm *NoteManager) Initialize() {
 func (nm *NoteManager) ProcessNote(note models.NoteRequest) error {
 	noteReq := note
 
-	resDb, lastId := dbm.InsertNote(noteReq)
-	if resDb == "OK" && lastId != 0 {
-		fmt.Println("Note inserted successfully in DB")
-	} else {
-		//should retry or add to notes_failed.txt or notesFailed queue/channel
-	}
+	/*
+		resDb, lastId := dbm.InsertNote(noteReq)
+		if resDb == "OK" && lastId != 0 {
+			fmt.Println("Note inserted successfully in DB")
+		} else {
+			//should retry or add to notes_failed.txt or notesFailed queue/channel
+		}
+	*/
 
 	if err := nm.SendToSpring(noteReq); err != nil {
 		nm.FailedQueue <- noteReq
 		return fmt.Errorf("failed to send note to Spring: %w", err)
-	} else {
+	} /*else {
 		//update sentToSpring note status as true
 		dbm.UpdateNote(lastId, models.UpdateNoteOptions{SentToSpring: models.Ptr(true)})
-	}
+	}*/
 
 	fmt.Println("Note sent to Spring service")
 

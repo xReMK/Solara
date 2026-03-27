@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
     // Optimization: JOIN FETCH ensures tags are loaded in 1 query, not N queries.
-    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tag WHERE n.id = :id")
+    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tags WHERE n.id = :id")
     Optional<Note> findByIdWithTags(@Param("id") Long id);
 
-    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tag ORDER BY n.createdAt DESC")
+    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tags ORDER BY n.createdAt DESC")
     List<Note> findAllWithTags();
 }

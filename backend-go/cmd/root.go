@@ -227,10 +227,14 @@ var addCmd = &cobra.Command{
 }
 
 func addCmdRun(cmd *cobra.Command, args []string) {
+	// future scope : to handle note/text which contains "-"
+	// The "Interspersed" Problem, options : The POSIX Terminator (--) or Disable Interspersed Flags or handle manually writing parsing loops
 
 	if len(args) == 0 {
 		fmt.Println("Error, please provide note content")
 	}
+
+	fmt.Printf("tags: %v\n", tagList)
 
 	note := models.NoteRequest{
 		Content:    strings.Join(args, " "),

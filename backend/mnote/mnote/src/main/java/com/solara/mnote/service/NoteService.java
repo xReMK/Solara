@@ -17,7 +17,7 @@ public class NoteService {
     public Note createNote(NoteRequest noteRequest){
         Note note = new Note();
         note.setContent(noteRequest.getContent());
-        note.setTag(noteRequest.getTag());
+        note.setTags(noteRequest.getTags());
         note.setCreatedAt(noteRequest.getCreatedAt());
 
         return noteRepository.save(note);
