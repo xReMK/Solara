@@ -49,7 +49,7 @@ func (dbm *DBManager) InsertNote(note models.NoteRequest) (string, int64) {
 
 	// placeholders (?) to prevent SQL injection
 	res, err := db.Exec("INSERT INTO NotesTable(note, tag, created_at) VALUES(?, ?, ?)",
-		note.Content, note.Tag, note.CreatedAt)
+		note.Content, note.Tags, note.CreatedAt)
 	if err != nil {
 		log.Fatal(err)
 	}

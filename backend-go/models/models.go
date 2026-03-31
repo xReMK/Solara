@@ -2,6 +2,7 @@ package models
 
 // NoteRequest represents a note being sent to the backend
 type NoteRequest struct {
+	Id         string   `json:id`
 	Content    string   `json:"content"`
 	CreatedAt  string   `json:"createdAt"`
 	Tags       []string `json:"tags"`

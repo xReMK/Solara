@@ -112,7 +112,10 @@ ________________________________________________________________________________
 spring.datasource.password=1234
 
 
-
+Database Impact: Postgres and UUID
+When you run your application, Hibernate will tell Postgres to create the column as type uuid (not varchar)
+	Storage Efficiency: In Postgres, the uuid type takes exactly 16 bytes. A varchar(36) would take about 37–45 bytes
+	Indexing: Postgres has built-in support for B-Tree indexing on UUIDs, so your findById will still be $O(\log N)$ fast
 
 
    ___________________________________________________________________________________++++++++++++++++++  go  +++++++++++++++++++++++__________________________________________________________________________________________________

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Microsoft/go-winio"
+	"github.com/google/uuid"
 	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 )
@@ -118,7 +119,7 @@ func (p *program) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		log.Printf("Received Note: %+v\n", receivedNote)
+		log.Printf("\nReceived Note: %+v\n", receivedNote)
 
 		if err := noteManager.ProcessNote(receivedNote); err != nil {
 			logger.Info("Error processing note: %v\n", err)
@@ -237,6 +238,7 @@ func addCmdRun(cmd *cobra.Command, args []string) {
 	fmt.Printf("tags: %v\n", tagList)
 
 	note := models.NoteRequest{
+		Id:         uuid.New().String(),
 		Content:    strings.Join(args, " "),
 		Tags:       utils.CleanNoteTags(tagList),
 		Importance: utils.ParseNoteImportance(importance),
