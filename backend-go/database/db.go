@@ -40,7 +40,7 @@ func (dbm *DBManager) OpenDB() {
 	}
 }
 
-func (dbm *DBManager) InsertNote(note models.NoteRequest) (string, int64) {
+func (dbm *DBManager) InsertNote(note models.NoteAddRequest) (string, int64) {
 	db, err := sql.Open("sqlite", dbm.pragma)
 	if err != nil {
 		panic(err)

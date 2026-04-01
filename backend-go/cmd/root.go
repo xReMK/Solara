@@ -30,11 +30,15 @@ var (
 	logger     service.Logger
 	tagList    []string
 	importance string
+
+	updateAddTags    []string
+	updateRemoveTags []string
+	updateContent    string
 )
 
 type program struct {
-	queue       chan models.NoteRequest
-	failedQueue chan models.NoteRequest
+	queue       chan models.NoteAddRequest
+	failedQueue chan models.NoteAddRequest
 }
 
 func getService() (service.Service, error) {
@@ -72,8 +76,8 @@ func (p *program) Stop(s service.Service) error {
 // ============================================================================
 
 func (p *program) run() {
-	p.queue = make(chan models.NoteRequest, 100)
-	p.failedQueue = make(chan models.NoteRequest, 100)
+	p.queue = make(chan models.NoteAddRequest, 100)
+	p.failedQueue = make(chan models.NoteAddRequest, 100)
 
 	noteManager := notes.NewNoteManager(p.queue, p.failedQueue, "http://localhost:8080/api/notes")
 	notes.SetNoteManager(noteManager)
@@ -110,19 +114,17 @@ func (p *program) handleConnection(conn net.Conn) {
 
 	for scanner.Scan() {
 		rawBytes := scanner.Bytes()
-
-		var receivedNote models.NoteRequest
-
-		err := json.Unmarshal(rawBytes, &receivedNote)
-		if err != nil {
+		var env models.Envelope
+		if err := json.Unmarshal(rawBytes, &env); err != nil {
 			log.Printf("Error decoding JSON: %v. Raw data: %s", err, string(rawBytes))
 			continue
 		}
 
-		log.Printf("\nReceived Note: %+v\n", receivedNote)
+		log.Printf("\ndaemon : Received Note: %+v\n", env.Payload)
+		log.Printf("daemon : Action: %s\n", env.Action)
 
-		if err := noteManager.ProcessNote(receivedNote); err != nil {
-			logger.Info("Error processing note: %v\n", err)
+		if err := noteManager.ProcessNote(env); err != nil {
+			logger.Info("daemon : Error processing note by Spring: %v\n", err)
 			continue
 		}
 	}
@@ -237,15 +239,13 @@ func addCmdRun(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("tags: %v\n", tagList)
 
-	note := models.NoteRequest{
+	note := models.NoteAddRequest{
 		Id:         uuid.New().String(),
 		Content:    strings.Join(args, " "),
 		Tags:       utils.CleanNoteTags(tagList),
 		Importance: utils.ParseNoteImportance(importance),
 		CreatedAt:  time.Now().Format(time.RFC3339),
 	}
-
-	payload, _ := json.Marshal(note)
 
 	// Use winio.DialPipe for native Windows Pipe handling
 	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
@@ -255,11 +255,83 @@ func addCmdRun(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
+	payload, _ := json.Marshal(note)
+	envelope := models.Envelope{
+		Action:  models.ActionAdd,
+		Payload: payload,
+	}
+
+	finalBytes, _ := json.Marshal(envelope)
 	// --- Sending to Daemon here ---
 	// appending a \n because Daemon's bufio.Scanner looks for it
 	// to know the message is complete.
-	fmt.Fprintf(conn, "%s\n", string(payload))
+	fmt.Fprintln(conn, string(finalBytes))
 }
+
+var updateCmd = &cobra.Command{
+	Use:   "update [id] [content]",
+	Short: "-- To be added -- ",
+	Long:  `-- To be added -- `,
+	Args:  cobra.ArbitraryArgs,
+	Run:   updateCmdRun,
+}
+
+func updateCmdRun(cmd *cobra.Command, args []string) {
+	id := args[0]
+	updateReq := models.NoteUpdateRequest{ID: id}
+
+	if cmd.Flags().Changed("content") {
+		contentVal := strings.Join(args[1:], " ")
+		updateReq.Content = &contentVal
+	}
+
+	if cmd.Flags().Changed("add-tags") {
+		tagsVal := utils.CleanNoteTags(updateAddTags)
+		updateReq.AddTags = &tagsVal
+	}
+
+	if cmd.Flags().Changed("remove-tags") {
+		tagsVal := utils.CleanNoteTags(updateRemoveTags)
+		updateReq.RemoveTags = &tagsVal
+	}
+
+	if cmd.Flags().Changed("imp") {
+		impVal := strings.Count(importance, "*")
+		updateReq.Importance = &impVal
+	}
+	// If only 'imp' was changed, JSON is: {"id":"...", "importance":3}
+
+	payload, _ := json.Marshal(updateReq)
+	envelope := models.Envelope{
+		Action:  models.ActionUpdate,
+		Payload: payload,
+	}
+
+	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
+	if err != nil {
+		fmt.Println("Error: Daemon not running.")
+		return
+	}
+	defer conn.Close()
+
+	finalBytes, _ := json.Marshal(envelope)
+	fmt.Fprintln(conn, string(finalBytes))
+
+	//send to spring via daemon -- how does daemon identify the request type?
+}
+
+/*
+How cmd.Flags().Changed() Works
+	In Cobra, every flag has a default value
+	If you define --imp with a default of 0, and the user doesn't type it, the variable still holds 0
+	This makes it impossible to know if the user wanted to set importance to zero or just didn't care about it
+	Changed(name) looks at the internal state of the flag set to see if that specific flag was actually present in the command line string
+
+Limitation of standard Go structs
+	Zero Values
+	In Go, an int is 0, a string is "", and a bool is false
+	When you json.Marshal(note), Go can't tell if you meant "Set importance to 0" or "I didn't touch importance
+*/
 
 // ============================================================================
 // SECTION 6: INITIALIZATION AND ENTRY POINT
@@ -278,8 +350,12 @@ func init() {
 	rootCmd.AddCommand(startCmd, stopCmd)
 	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(updateCmd)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")
 	addCmd.Flags().StringVarP(&importance, "imp", "i", "", "Importance level (*, **, or ***)")
+	updateCmd.Flags().StringSliceVarP(&updateAddTags, "add-tags", "at", []string{}, "Adding tags to an existing note")
+	updateCmd.Flags().StringSliceVarP(&updateRemoveTags, "remove-tags", "rt", []string{}, "Removing tags of an existing note")
+	updateCmd.Flags().StringVarP(&updateContent, "content", "c", "", "Update note content")
 }

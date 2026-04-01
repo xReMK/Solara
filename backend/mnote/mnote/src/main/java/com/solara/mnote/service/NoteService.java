@@ -1,14 +1,16 @@
 package com.solara.mnote.service;
 
-import com.solara.mnote.models.dto.NoteRequest;
+import com.solara.mnote.models.dto.NoteCreateDTO;
+import com.solara.mnote.models.dto.NoteUpdateDTO;
 import com.solara.mnote.models.entity.Note;
 import com.solara.mnote.repo.NoteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -20,27 +22,45 @@ public class NoteService {
     private final NoteRepository noteRepository;
 
     @Transactional
-    public Note saveOrUpdate(NoteRequest noteRequest){
-        //If updating an existing note and adding tags, we don't want to overwrite the old ones; we want to merge them
-        UUID uuid = UUID.fromString(noteRequest.getId());
-        Optional<Note> existing = noteRepository.findById(uuid);
-
-        if(existing.isPresent()){
-            Note note = existing.get();
-            note.setContent(noteRequest.getContent());
-            note.setCreatedAt(noteRequest.getCreatedAt());
-            note.setImportance(noteRequest.getImportance());
-            note.getTags().addAll(noteRequest.getTags());
-            // Note: No repo.save() needed here! Hibernate syncs at method end.
-            return note;
-        } else{
-            Note newNote = new Note();
-            newNote.setId(uuid);
-            newNote.setContent(noteRequest.getContent());
-            newNote.setImportance(noteRequest.getImportance());
-            newNote.setTags(new HashSet<>(noteRequest.getTags()));
-            return noteRepository.save(newNote); // Required for new objects
+    public Note create(NoteCreateDTO dto) {
+        UUID uuid = UUID.fromString(dto.getId());
+        Note note = new Note();
+        note.setId(uuid);
+        note.setContent(dto.getContent());
+        note.setImportance(dto.getImportance() != null ? dto.getImportance() : 0);
+        if (dto.getTags() != null) {
+            note.setTags(new HashSet<>(dto.getTags()));
         }
+        note.setCreatedAt(dto.getCreatedAt());
+        return noteRepository.save(note);
+    }
+
+    @Transactional
+    public Note patch(UUID id, NoteUpdateDTO dto) {
+        Note existing = noteRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note not found"));
+
+        // Partial Update Logic
+        if (dto.getContent() != null) {
+            existing.setContent(dto.getContent());
+        }
+
+        if (dto.getImportance() != null) {
+            existing.setImportance(dto.getImportance());
+        }
+
+        if (dto.getAddTags() != null) {
+            existing.getTags().addAll(dto.getAddTags());
+        }
+
+        if (dto.getRemoveTags() != null) {
+            existing.getTags().removeAll(dto.getRemoveTags());
+        }
+
+        // No repository.save() needed due to @Transactional Dirty Checking
+        return existing;
+    }
+
         /*
         Instead of
             Set<String> lol = new HashSet<>();
@@ -87,6 +107,4 @@ public class NoteService {
 
             .orElseGet(...): This only runs if the box is Empty. It provides a fallback (creating a new Note)
          */
-
-    }
 }

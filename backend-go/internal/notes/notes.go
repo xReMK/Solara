@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"mnote/database"
 	"mnote/models"
+	"net/http"
 	"sync"
 	"time"
-
-	"net/http"
 )
 
 var (
@@ -20,13 +20,13 @@ var (
 )
 
 type NoteManager struct {
-	Queue       chan models.NoteRequest
-	FailedQueue chan models.NoteRequest
+	Queue       chan models.NoteAddRequest
+	FailedQueue chan models.NoteAddRequest
 	SpringURL   string
 	TimeoutSecs time.Duration
 }
 
-func NewNoteManager(queue chan models.NoteRequest, failedQueue chan models.NoteRequest, springURL string) *NoteManager {
+func NewNoteManager(queue chan models.NoteAddRequest, failedQueue chan models.NoteAddRequest, springURL string) *NoteManager {
 	if springURL == "" {
 		springURL = "http://localhost:8080/api/notes"
 	}
@@ -59,56 +59,42 @@ func (nm *NoteManager) Initialize() {
 	dbm.OpenDB()
 }
 
-func (nm *NoteManager) ProcessNote(note models.NoteRequest) error {
-	noteReq := note
+func (nm *NoteManager) ProcessNote(env models.Envelope) error {
 
-	/*
-		resDb, lastId := dbm.InsertNote(noteReq)
-		if resDb == "OK" && lastId != 0 {
-			fmt.Println("Note inserted successfully in DB")
-		} else {
-			//should retry or add to notes_failed.txt or notesFailed queue/channel
-		}
-	*/
+	switch env.Action {
+	case models.ActionAdd:
+		var req models.NoteAddRequest
+		json.Unmarshal(env.Payload, &req)
+		nm.SendToSpring("POST", "/api/notes", req)
 
-	if err := nm.SendToSpring(noteReq); err != nil {
-		nm.FailedQueue <- noteReq
-		return fmt.Errorf("failed to send note to Spring: %w", err)
-	} /*else {
-		//update sentToSpring note status as true
-		dbm.UpdateNote(lastId, models.UpdateNoteOptions{SentToSpring: models.Ptr(true)})
-	}*/
+	case models.ActionUpdate:
+		var req models.NoteUpdateRequest
+		json.Unmarshal(env.Payload, &req)
+		// Call PATCH /api/notes/{id}
+		nm.SendToSpring("PATCH", "/api/notes/"+req.ID, req)
+	}
 
 	fmt.Println("Note sent to Spring service")
 
 	return nil
 }
 
-func (nm *NoteManager) SendToSpring(noteReq models.NoteRequest) error {
-	jsonData, err := json.Marshal(noteReq)
+func (nm *NoteManager) SendToSpring(method string, path string, body any) {
+	jsonData, err := json.Marshal(body)
 	if err != nil {
-		return fmt.Errorf("failed to marshal json: %w", err)
+		log.Printf("Error marshaling request: %v", err)
+		return
 	}
+	url := "http://localhost:8080" + path
+	req, _ := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
 
-	// Use a client with timeout to prevent hanging indefinitely
-	// Production tip: Never use http.DefaultClient without a timeout
-	client := &http.Client{
-		Timeout: nm.TimeoutSecs,
-	}
-
-	resp, err := client.Post(nm.SpringURL, "application/json", bytes.NewBuffer(jsonData))
+	// 3. Execute
+	client := &http.Client{}
+	_, err = client.Do(req)
 	if err != nil {
-		return fmt.Errorf("POST request failed: %w", err)
+		log.Printf("Error sending request to Spring: %v", err)
 	}
-
-	// Always close the body to return the TCP connection to the pool
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("spring returned error: %d", resp.StatusCode)
-	}
-
-	return nil
 }
 
 func (nm *NoteManager) ProcessFailedNotes() {
