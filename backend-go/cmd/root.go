@@ -34,6 +34,7 @@ var (
 	updateAddTags    []string
 	updateRemoveTags []string
 	updateContent    string
+	updateImportance string
 )
 
 type program struct {
@@ -119,10 +120,7 @@ func (p *program) handleConnection(conn net.Conn) {
 			log.Printf("Error decoding JSON: %v. Raw data: %s", err, string(rawBytes))
 			continue
 		}
-
-		log.Printf("\ndaemon : Received Note: %+v\n", env.Payload)
-		log.Printf("daemon : Action: %s\n", env.Action)
-
+		log.Printf("daemon : Raw Payload: %s\n", string(env.Payload))
 		if err := noteManager.ProcessNote(env); err != nil {
 			logger.Info("daemon : Error processing note by Spring: %v\n", err)
 			continue
@@ -355,7 +353,8 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")
 	addCmd.Flags().StringVarP(&importance, "imp", "i", "", "Importance level (*, **, or ***)")
-	updateCmd.Flags().StringSliceVarP(&updateAddTags, "add-tags", "at", []string{}, "Adding tags to an existing note")
-	updateCmd.Flags().StringSliceVarP(&updateRemoveTags, "remove-tags", "rt", []string{}, "Removing tags of an existing note")
+	updateCmd.Flags().StringSliceVarP(&updateAddTags, "add-tags", "a", []string{}, "Adding tags to an existing note")
+	updateCmd.Flags().StringSliceVarP(&updateRemoveTags, "remove-tags", "r", []string{}, "Removing tags of an existing note")
 	updateCmd.Flags().StringVarP(&updateContent, "content", "c", "", "Update note content")
+	updateCmd.Flags().StringVarP(&updateImportance, "imp", "i", "", "Update importance level (*, **, or ***)")
 }

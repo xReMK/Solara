@@ -27,11 +27,11 @@ public class NoteService {
         Note note = new Note();
         note.setId(uuid);
         note.setContent(dto.getContent());
+        note.setCreatedAt(dto.getCreatedAt());
         note.setImportance(dto.getImportance() != null ? dto.getImportance() : 0);
         if (dto.getTags() != null) {
             note.setTags(new HashSet<>(dto.getTags()));
         }
-        note.setCreatedAt(dto.getCreatedAt());
         return noteRepository.save(note);
     }
 

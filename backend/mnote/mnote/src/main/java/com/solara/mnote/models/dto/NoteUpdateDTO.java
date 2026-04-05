@@ -17,6 +17,12 @@ public class NoteUpdateDTO {
     @JsonProperty("createdAt")
     private OffsetDateTime createdAt;
 
+    /*
+    Since the JSON payload from go-service will now have "missing" fields, Spring DTO must use Wrapper classes, not primitives.
+        Bad: private int importance; (Default is 0, so it always looks like the user sent a 0).
+        Good: private Integer importance; (Default is null. If it's null in the JSON, Jackson leaves it null in Java)
+     */
+
     public String getContent() {
         return content;
     }

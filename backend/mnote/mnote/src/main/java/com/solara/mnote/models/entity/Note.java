@@ -1,6 +1,8 @@
 package com.solara.mnote.models.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -12,12 +14,14 @@ import java.util.UUID;
 public class Note{
 
     @Id
-    private UUID Id;
+    @JdbcTypeCode(SqlTypes.UUID) // Ensures Hibernate maps it to Postgres UUID
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "content",columnDefinition = "TEXT")
     private String content;
 
-    @Column(columnDefinition = "importance")
+    @Column(name = "importance")
     private int importance;
 
     // A single note cannot have the same tag twice
@@ -38,8 +42,8 @@ public class Note{
     @Column(name = "created_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
 
-    public UUID getId(){ return Id; }
-    public void setId(UUID uuid){ this.Id = uuid;}
+    public UUID getId(){ return id; }
+    public void setId(UUID uuid){ this.id = uuid;}
     public String getContent() {
         return content;
     }
