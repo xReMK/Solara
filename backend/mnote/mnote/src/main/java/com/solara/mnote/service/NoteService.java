@@ -3,9 +3,11 @@ package com.solara.mnote.service;
 import com.solara.mnote.models.dto.NoteCreateDTO;
 import com.solara.mnote.models.dto.NoteUpdateDTO;
 import com.solara.mnote.models.entity.Note;
+import com.solara.mnote.models.event.NoteCreatedEvent;
 import com.solara.mnote.repo.NoteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,9 +22,10 @@ public class NoteService {
     //@Autowired not required because @RequiredArgsConstructor creates default & the necessary constructors
     //understand why this is better than field injection
     private final NoteRepository noteRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional
-    public Note create(NoteCreateDTO dto) {
+
+    public Note mapToEntity(NoteCreateDTO dto){
         UUID uuid = UUID.fromString(dto.getId());
         Note note = new Note();
         note.setId(uuid);
@@ -32,31 +35,40 @@ public class NoteService {
         if (dto.getTags() != null) {
             note.setTags(new HashSet<>(dto.getTags()));
         }
-        return noteRepository.save(note);
+        return note;
+    }
+
+    @Transactional
+    public Note create(NoteCreateDTO dto) {
+        Note note = mapToEntity(dto);
+        Note result = noteRepository.save(note);
+
+        // 1. Publish the event.
+        // At this point, the DB transaction is still OPEN.
+        eventPublisher.publishEvent(new NoteCreatedEvent(result));
+
+        // 2. Return to the controller (and Go service).
+        // The transaction commits immediately after this return.
+        return result;
     }
 
     @Transactional
     public Note patch(UUID id, NoteUpdateDTO dto) {
         Note existing = noteRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note not found"));
-
         // Partial Update Logic
         if (dto.getContent() != null) {
             existing.setContent(dto.getContent());
         }
-
         if (dto.getImportance() != null) {
             existing.setImportance(dto.getImportance());
         }
-
         if (dto.getAddTags() != null) {
             existing.getTags().addAll(dto.getAddTags());
         }
-
         if (dto.getRemoveTags() != null) {
             existing.getTags().removeAll(dto.getRemoveTags());
         }
-
         // No repository.save() needed due to @Transactional Dirty Checking
         return existing;
     }

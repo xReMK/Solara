@@ -105,9 +105,8 @@ func (p *program) run() {
 }
 
 func (p *program) handleConnection(conn net.Conn) {
-	s, _ := getService()
-	logger, _ := s.Logger(nil)
-
+	//s, _ := getService()
+	//logger, _ := s.Logger(nil)
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 
@@ -122,14 +121,13 @@ func (p *program) handleConnection(conn net.Conn) {
 		}
 		log.Printf("daemon : Raw Payload: %s\n", string(env.Payload))
 
-		response := "Success: Note added."
-		if err := noteManager.ProcessNote(env); err != nil {
-			logger.Info("daemon : Error processing note by Spring: %v\n", err)
-			response = fmt.Sprintf("Error: %v", err)
-			continue
+		status, err := noteManager.ProcessNote(env)
+		if err != nil {
+			fmt.Fprintf(conn, "Error: %v\n", err)
+		} else {
+			fmt.Fprintf(conn, "Success: %s\n", status)
 		}
 
-		fmt.Fprintln(conn, response) // Send this back to the CLI
 	}
 
 }
@@ -326,7 +324,7 @@ func updateCmdRun(cmd *cobra.Command, args []string) {
 }
 
 func listenToResponse(conn net.Conn) {
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	conn.SetReadDeadline(time.Now().Add(12 * time.Second))
 
 	scanner := bufio.NewScanner(conn)
 	if scanner.Scan() {

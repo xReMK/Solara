@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"mnote/database"
 	"mnote/models"
 	"net/http"
@@ -59,42 +58,51 @@ func (nm *NoteManager) Initialize() {
 	dbm.OpenDB()
 }
 
-func (nm *NoteManager) ProcessNote(env models.Envelope) error {
+func (nm *NoteManager) ProcessNote(env models.Envelope) (string, error) {
+	var msg string
+	var err error
 
 	switch env.Action {
 	case models.ActionAdd:
 		var req models.NoteAddRequest
 		json.Unmarshal(env.Payload, &req)
-		nm.SendToSpring("POST", "/api/notes", req)
+		msg, err = nm.SendToSpring("POST", "/api/notes", req)
 
 	case models.ActionUpdate:
 		var req models.NoteUpdateRequest
 		json.Unmarshal(env.Payload, &req)
 		// Call PATCH /api/notes/{id}
-		nm.SendToSpring("PATCH", "/api/notes/"+req.ID, req)
+		msg, err = nm.SendToSpring("PATCH", "/api/notes/"+req.ID, req)
+
+	default:
+		return "", fmt.Errorf("unknown action: %s", env.Action)
 	}
+	//fmt.Println("Note sent to Spring service")
 
-	fmt.Println("Note sent to Spring service")
-
-	return nil
+	return msg, err
 }
 
-func (nm *NoteManager) SendToSpring(method string, path string, body any) {
+func (nm *NoteManager) SendToSpring(method string, path string, body any) (string, error) {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("Error marshaling request: %v", err)
-		return
+		return "", fmt.Errorf("marshal error: %w", err)
 	}
 	url := "http://localhost:8080" + path
 	req, _ := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
 
-	// 3. Execute
-	client := &http.Client{}
-	_, err = client.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Error sending request to Spring: %v", err)
+		return "", fmt.Errorf("spring service unreachable: %w", err)
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return "Success", nil
+	}
+
+	return "", fmt.Errorf("spring returned error: %d", resp.StatusCode)
 }
 
 func (nm *NoteManager) ProcessFailedNotes() {

@@ -31,6 +31,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleConflic(DataIntegrityViolationException ex){
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Database Conflict: ID already exists");
     }
+
+    // to be handled : TaskRejectedException
 }
 /*
 This class centralizes handling of validation errors, status‑code‑based exceptions
