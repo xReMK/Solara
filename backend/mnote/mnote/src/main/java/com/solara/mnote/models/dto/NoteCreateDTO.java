@@ -1,19 +1,28 @@
 package com.solara.mnote.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.*;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
 
 public class NoteCreateDTO {
     @JsonProperty("id")
+    @NotNull(message = "UUID is required")
     private String Id;
+
     @JsonProperty("content")
+    @NotBlank(message = "Content cannot be empty")
+    @Size(max = 5000, message = "Note is too long")
     private String content;
+
     @JsonProperty("tags")
     private Set<String> tags;
+
     @JsonProperty("importance")
+    @Min(0) @Max(5)
     private Integer importance;
+
     // Jackson handles the parsing automatically if it's standard ISO-8601/RFC3339
     @JsonProperty("createdAt")
     private OffsetDateTime createdAt;

@@ -5,6 +5,7 @@ import com.solara.mnote.models.dto.NoteUpdateDTO;
 import com.solara.mnote.models.entity.Note;
 import com.solara.mnote.repo.NoteRepository;
 import com.solara.mnote.service.NoteService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class NoteController{
     private final NoteRepository noteRepository;
 
     @PostMapping
-    public ResponseEntity<Note> createNote(@RequestBody NoteCreateDTO dto) {
+    public ResponseEntity<Note> createNote(@Valid @RequestBody NoteCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(noteService.create(dto));
     }
 

@@ -121,10 +121,15 @@ func (p *program) handleConnection(conn net.Conn) {
 			continue
 		}
 		log.Printf("daemon : Raw Payload: %s\n", string(env.Payload))
+
+		response := "Success: Note added."
 		if err := noteManager.ProcessNote(env); err != nil {
 			logger.Info("daemon : Error processing note by Spring: %v\n", err)
+			response = fmt.Sprintf("Error: %v", err)
 			continue
 		}
+
+		fmt.Fprintln(conn, response) // Send this back to the CLI
 	}
 
 }
@@ -264,6 +269,8 @@ func addCmdRun(cmd *cobra.Command, args []string) {
 	// appending a \n because Daemon's bufio.Scanner looks for it
 	// to know the message is complete.
 	fmt.Fprintln(conn, string(finalBytes))
+
+	listenToResponse(conn)
 }
 
 var updateCmd = &cobra.Command{
@@ -316,6 +323,18 @@ func updateCmdRun(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(conn, string(finalBytes))
 
 	//send to spring via daemon -- how does daemon identify the request type?
+}
+
+func listenToResponse(conn net.Conn) {
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+
+	scanner := bufio.NewScanner(conn)
+	if scanner.Scan() {
+		response := scanner.Text()
+		fmt.Printf("Daemon Response: %s\n", response)
+	} else if err := scanner.Err(); err != nil {
+		fmt.Printf("Error waiting for daemon: %v\n", err)
+	}
 }
 
 /*
