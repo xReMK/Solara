@@ -101,7 +101,9 @@ ________________________________________________________________________________
 
 Days 1-3: Persistence Context & Dirty Checking. Implement the Note entity. Understand why you shouldn't call repository.save() inside a transaction (Dirty Checking)
 
+In modern Java (Java 21+), we now have Virtual Threads. They are very similar to Go's Goroutines. If you use Virtual Threads, you don't even need a pool—you just spawn thousands of them
 
+In Spring, classes should follow the Single Responsibility Principle (SRP)
 
 
 

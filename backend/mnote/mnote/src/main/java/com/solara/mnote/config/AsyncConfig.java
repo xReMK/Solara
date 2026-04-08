@@ -10,16 +10,18 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-@EnableScheduling
+@EnableScheduling //understand more about these annotations, where & how exactly does spring load this class & how it and the methods which it hosts impact the project
 public class AsyncConfig {
 
     @Bean(name = "noteTaskExecutor")
     public Executor noteTaskExecutor(){
+        int cores = Runtime.getRuntime().availableProcessors();
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("NoteAsync-");
+
+        executor.setCorePoolSize(cores);
+        executor.setMaxPoolSize(cores*2);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("mnote-async-");
         executor.initialize();
         return executor;
     }
