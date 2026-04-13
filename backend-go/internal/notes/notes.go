@@ -74,6 +74,9 @@ func (nm *NoteManager) ProcessNote(env models.Envelope) (string, error) {
 		// Call PATCH /api/notes/{id}
 		msg, err = nm.SendToSpring("PATCH", "/api/notes/"+req.ID, req)
 
+	case models.ActionList:
+		msg, err = nm.SendToSpring("GET", "/api/notes/", nil)
+
 	default:
 		return "", fmt.Errorf("unknown action: %s", env.Action)
 	}

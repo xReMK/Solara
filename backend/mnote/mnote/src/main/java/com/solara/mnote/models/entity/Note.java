@@ -9,6 +9,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+/*
+type Note struct {
+    id        UUID    `json:"id"`
+    content     string `json:"title"`
+    importance   int `json:"content"`
+    tags        []string
+    createdAt string
+}
+ */
+
 @Entity
 @Table(name = "notes")
 public class Note{

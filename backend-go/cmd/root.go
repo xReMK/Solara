@@ -233,7 +233,6 @@ var addCmd = &cobra.Command{
 func addCmdRun(cmd *cobra.Command, args []string) {
 	// future scope : to handle note/text which contains "-"
 	// The "Interspersed" Problem, options : The POSIX Terminator (--) or Disable Interspersed Flags or handle manually writing parsing loops
-
 	if len(args) == 0 {
 		fmt.Println("Error, please provide note content")
 	}
@@ -321,6 +320,33 @@ func updateCmdRun(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(conn, string(finalBytes))
 
 	//send to spring via daemon -- how does daemon identify the request type?
+}
+
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "-- To be added -- ",
+	Long:  `-- To be added -- `,
+	Args:  cobra.ArbitraryArgs,
+	Run:   listCmdRun,
+}
+
+func listCmdRun(cmd *cobra.Command, args []string) {
+	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
+	if err != nil {
+		fmt.Println("Error: Daemon not running.")
+		return
+	}
+	defer conn.Close()
+
+	envelope := models.Envelope{
+		Action:  models.ActionList,
+		Payload: nil,
+	}
+
+	finalBytes, _ := json.Marshal(envelope)
+	fmt.Fprintln(conn, string(finalBytes))
+
+	listenToResponse(conn)
 }
 
 func listenToResponse(conn net.Conn) {

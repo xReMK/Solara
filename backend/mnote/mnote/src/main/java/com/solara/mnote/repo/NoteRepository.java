@@ -16,4 +16,8 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
 
     @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tags ORDER BY n.createdAt DESC")
     List<Note> findAllWithTags();
+
+    List<Note> findAllByOrderByCreatedAtDesc();
+
+    List<Note> findByTagsContaining(String tag);
 }

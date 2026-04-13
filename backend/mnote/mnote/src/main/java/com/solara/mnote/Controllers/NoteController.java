@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -29,6 +30,12 @@ public class NoteController{
     @PatchMapping("/{id}")
     public ResponseEntity<Note> updateNote(@PathVariable UUID id, @RequestBody NoteUpdateDTO dto) {
         return ResponseEntity.ok(noteService.patch(id, dto));
+    }
+
+    @GetMapping
+    public List<Note> fetchNotes(@RequestParam(required = false) String tag){
+        if(tag!=null) return noteRepository.findByTagsContaining(tag);
+        return noteRepository.findAllByOrderByCreatedAtDesc();
     }
 
 }
