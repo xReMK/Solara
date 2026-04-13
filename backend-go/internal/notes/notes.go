@@ -75,7 +75,7 @@ func (nm *NoteManager) ProcessNote(env models.Envelope) (string, error) {
 		msg, err = nm.SendToSpring("PATCH", "/api/notes/"+req.ID, req)
 
 	case models.ActionList:
-		msg, err = nm.SendToSpring("GET", "/api/notes/", nil)
+		msg, err = nm.SendToSpring("GET", "/api/notes", nil)
 
 	default:
 		return "", fmt.Errorf("unknown action: %s", env.Action)
@@ -100,6 +100,13 @@ func (nm *NoteManager) SendToSpring(method string, path string, body any) (strin
 		return "", fmt.Errorf("spring service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
+
+	allNotes := []models.NoteResponse{}
+	if err := json.NewDecoder(resp.Body).Decode(&allNotes); err != nil {
+		return "", fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	fmt.Println("notes: ", allNotes)
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return "Success", nil

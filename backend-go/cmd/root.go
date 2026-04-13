@@ -119,7 +119,7 @@ func (p *program) handleConnection(conn net.Conn) {
 			log.Printf("Error decoding JSON: %v. Raw data: %s", err, string(rawBytes))
 			continue
 		}
-		log.Printf("daemon : Raw Payload: %s\n", string(env.Payload))
+		log.Println("\ndaemon : Raw Payload: ", string(env.Payload))
 
 		status, err := noteManager.ProcessNote(env)
 		if err != nil {
@@ -392,6 +392,7 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(listCmd)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")

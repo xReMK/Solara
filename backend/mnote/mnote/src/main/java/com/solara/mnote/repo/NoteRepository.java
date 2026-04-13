@@ -21,3 +21,12 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
 
     List<Note> findByTagsContaining(String tag);
 }
+
+/*
+public interface NoteRepository extends JpaRepository<Note, UUID> {
+    // Spring handles the LIMIT and OFFSET behind the scenes
+    Page<Note> findAll(Pageable pageable);
+
+    Page<Note> findByTagsContaining(String tag, Pageable pageable);
+}
+ */

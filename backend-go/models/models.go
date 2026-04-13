@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type CommandType string
 
@@ -20,6 +22,13 @@ type NoteUpdateRequest struct {
 	AddTags    *[]string `json:"add_tags,omitempty"`
 	RemoveTags *[]string `json:"remove_tags,omitempty"`
 	Importance *int      `json:"importance,omitempty"`
+}
+
+type NoteResponse struct {
+	Id         string   `json:"id"`
+	Content    string   `json:"content"`
+	Tags       []string `json:"tags"`
+	Importance int      `json:"importance"`
 }
 
 //The json:"...,omitempty" tag tells the Go encoder:

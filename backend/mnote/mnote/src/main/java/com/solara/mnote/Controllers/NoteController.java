@@ -3,6 +3,7 @@ package com.solara.mnote.controllers;
 import com.solara.mnote.models.dto.NoteCreateDTO;
 import com.solara.mnote.models.dto.NoteUpdateDTO;
 import com.solara.mnote.models.entity.Note;
+import com.solara.mnote.models.responses.NoteResponse;
 import com.solara.mnote.repo.NoteRepository;
 import com.solara.mnote.service.NoteService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
@@ -33,10 +35,38 @@ public class NoteController{
     }
 
     @GetMapping
-    public List<Note> fetchNotes(@RequestParam(required = false) String tag){
-        if(tag!=null) return noteRepository.findByTagsContaining(tag);
-        return noteRepository.findAllByOrderByCreatedAtDesc();
+    public List<NoteResponse> fetchNotes(@RequestParam(required = false) String tag){
+        List<Note> notes = (tag != null && !tag.isBlank())
+                ? noteRepository.findByTagsContaining(tag)
+                : noteRepository.findAllByOrderByCreatedAtDesc();
+
+        return notes.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+    }
+
+    public NoteResponse convertToDto(Note note){
+        NoteResponse noteResponse = new NoteResponse();
+        noteResponse.setId(note.getId().toString());
+        noteResponse.setContent(note.getContent());
+        noteResponse.setImportance(note.getImportance());
+        noteResponse.setTags(note.getTags());
+
+        return noteResponse;
     }
 
 }
+/*
+@GetMapping
+public Page<NoteResponse> fetchNotes(
+        @RequestParam(required = false) String tag,
+        Pageable pageable) { // Spring populates this from ?page=x&size=y
 
+    Page<Note> notes = (tag != null && !tag.isBlank())
+            ? noteRepository.findByTagsContaining(tag, pageable)
+            : noteRepository.findAll(pageable);
+
+    return notes.map(this::convertToDto);
+}
+ */
