@@ -1,0 +1,25 @@
+resilience4j:
+  retry:
+    instances:
+      default:  # Use 'default' or name your retry instance
+        max-attempts: 3
+        wait-duration: 2000ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.RestClientException
+        ignore-exceptions: []
+
+spring:
+  aop:
+    proxy-target-class: true  # Use CGLIB proxies (recommended with multiple AOP aspects)
+
+# Optional: Enable Resilience4j metrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: always

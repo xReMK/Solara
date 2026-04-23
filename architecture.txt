@@ -105,6 +105,15 @@ In modern Java (Java 21+), we now have Virtual Threads. They are very similar to
 
 In Spring, classes should follow the Single Responsibility Principle (SRP)
 
+springAI?
+
+genAI? 
+
+knowledge graphs > RAG pipelines? what & why?
+
+how is an agent different from an ai workflow?
+
+mlops, aiops
 
 
 ___________________________________________________________________________________++++++++++++++++++  pgadmin4  +++++++++++++++++++++++__________________________________________________________________________________________________

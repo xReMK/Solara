@@ -9,7 +9,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
@@ -53,6 +55,12 @@ public class NoteService {
     }
 
     @Transactional
+    @Retryable(
+            includes = { RestClientException.class },
+            maxRetries = 2,      // Attempts = retries + 1 (3 total)
+            delay = 2000,        // Fixed delay in ms
+            multiplier = 2.0     // Exponential backoff multiplier
+    )
     public Note patch(UUID id, NoteUpdateDTO dto) {
         Note existing = noteRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note not found"));
