@@ -34,6 +34,9 @@ public class Note{
     @Column(name = "importance")
     private int importance;
 
+    @Column(columnDefinition = "vector(768)")
+    private float[] embedding;
+
     // A single note cannot have the same tag twice
     /*
     By changing the Java type from List<String> to Set<String>, Hibernate automatically handles basic deduplication in memory

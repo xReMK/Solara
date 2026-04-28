@@ -1,0 +1,8 @@
+
+sha256-4c27e0f5b5adf02ac956c7322bd2ee7636fe3f45a8512c9aba5385242cb6e09a - gemma4:e4b
+The File Format: GGUF - GPT-Generated Unified Format
+
+A GGUF file is divided into three sequential sections:
+	Header: A small magic number identifying the file and the version.
+	Metadata (The Config): Key-value pairs containing the "blueprints"—model architecture (Gemma, Llama), number of layers, attention heads, context length, and the Tokenizer vocabulary (the map of text strings to ID numbers).
+	Tensors (The Weights): The bulk of the 10GB. These are huge multi-dimensional arrays of numbers. In your 4-bit model, these are "packed" integers

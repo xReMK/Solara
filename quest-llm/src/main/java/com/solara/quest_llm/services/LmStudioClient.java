@@ -19,40 +19,7 @@ import java.util.Objects;
 @Service
 public class LmStudioClient {
     private final RestClient restClient;
-    /**
-     * Returns a list of keys for all models that have at least one
-     * loaded instance (ready to chat).
-     */
-    public List<LmModelResponse.ModelData> getActiveModelKeys() {
-        LmModelResponse response = restClient.get()
-                .uri("/models")
-                .retrieve()
-                .body(LmModelResponse.class); // Spring auto-converts JSON to your Record
 
-        response.models().forEach(model -> {
-            System.out.println("Model: " + model.displayName());
-            System.out.println("Is Loaded: " + !model.loadedInstances().isEmpty());
-        });
-
-        return response.models();
-    }
-    public String getRawChatResponse(String userPrompt) {
-        userPrompt = "hello, how are you doing?";
-        var request = new LmModelResponse.ChatRequest(
-                "dolphin3-8k",
-                List.of(new LmModelResponse.Message("user", userPrompt)),
-                0.7
-        );
-
-        return restClient.post()
-                .uri("/chat")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .body(String.class); // You can map this to a proper ChatResponse DTO later
-    }
-
-    // real shit here
     // 1) POST : /api/v1/chat
     public LmChatResponse chatWithTools(LmChatRequest request) {
         return restClient.post()

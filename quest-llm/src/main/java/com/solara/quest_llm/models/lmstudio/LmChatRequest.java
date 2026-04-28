@@ -8,6 +8,6 @@ public record LmChatRequest(
         String model,
         String input,
         List<LmIntegration> integrations,
-        @JsonProperty("context_length") int contextLength,
+        @JsonProperty("context_length") Integer contextLength,
         Double temperature
 ) {}

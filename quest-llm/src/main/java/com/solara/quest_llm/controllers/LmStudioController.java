@@ -1,6 +1,7 @@
 package com.solara.quest_llm.controllers;
 
-import com.solara.quest_llm.models.LmModelResponse;
+import com.solara.quest_llm.models.lmstudio.LmChatRequest;
+import com.solara.quest_llm.models.lmstudio.LmChatResponse;
 import com.solara.quest_llm.models.lmstudio.LmModelEntry;
 import com.solara.quest_llm.services.LmStudioClient;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
-public class DolphinController {
+public class LmStudioController {
 
     private final LmStudioClient lmStudioClient;
 
@@ -21,7 +22,7 @@ public class DolphinController {
     }
 
     @PostMapping("/chat")
-    public String postPrompt(@RequestBody String prompt){
-        return lmStudioClient.getRawChatResponse(prompt);
+    public LmChatResponse postPrompt(@RequestBody LmChatRequest request){
+        return lmStudioClient.chatWithTools(request);
     }
 }
