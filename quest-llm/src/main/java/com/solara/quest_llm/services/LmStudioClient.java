@@ -3,6 +3,8 @@ package com.solara.quest_llm.services;
 import com.solara.quest_llm.models.LmModelResponse;
 import com.solara.quest_llm.models.lmstudio.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Service
 public class LmStudioClient {
+    @Qualifier("lmStudio")
     private final RestClient restClient;
 
     // 1) POST : /api/v1/chat
