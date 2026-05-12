@@ -1,3 +1,15 @@
 package com.solara.quest_llm.models.kafkaDto.requests;
 
-public record EmbeddingRequest(Long noteId, String text) {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class EmbeddingRequest {
+    private UUID noteId;
+    private String text;
+}

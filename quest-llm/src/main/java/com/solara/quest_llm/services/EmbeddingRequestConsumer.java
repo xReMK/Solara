@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmbeddingRequestConsumer {
 
-    @KafkaListener(topics = "embeddings-request", groupId = "quest-embedding-group")
+    @KafkaListener(topics = "embeddings-request")
     public void consume(EmbeddingRequest request){
-        System.out.println("Received note "+request.noteId()+" from Kafka");
+        System.out.println("Received note "+ request.getNoteId().toString()+" from Kafka");
 
         // Logic to call LMStudio would go here
         // float[] vector = lmStudioService.getEmbedding(request.text());
