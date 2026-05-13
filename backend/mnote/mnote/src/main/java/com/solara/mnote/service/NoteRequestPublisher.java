@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class NoteEventPublisher {
+public class NoteRequestPublisher {
     // similar to RestClient for Http/Rest calls
     private final KafkaTemplate<String, EmbeddingRequest> kafkaTemplate;
     private final String TOPIC = "embeddings-request";

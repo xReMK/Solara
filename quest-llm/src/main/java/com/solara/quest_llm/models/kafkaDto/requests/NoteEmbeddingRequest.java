@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EmbeddingRequest {
+public class NoteEmbeddingRequest {
     private UUID noteId;
     private String text;
 }

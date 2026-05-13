@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient;
 public class NoteServiceProcessor {
 
     private final RestClient restClient;
-    private final NoteEventPublisher noteEventPublisher;
+    private final NoteRequestPublisher noteRequestPublisher;
 
     @Async("noteTaskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -35,7 +35,7 @@ public class NoteServiceProcessor {
         System.out.println("INSIDE NoteServiceProcessor :: vectors : "+ Arrays.toString(vectors));
         */
 
-        noteEventPublisher.publishEmbeddingRequest(note.getId(),note.getContent());
+        noteRequestPublisher.publishEmbeddingRequest(note.getId(),note.getContent());
 
         try {
             Thread.sleep(10000);
