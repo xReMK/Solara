@@ -81,7 +81,19 @@ public class NoteService {
         return existing;
     }
 
+    @Transactional
+    public void updateNoteVector(UUID noteId, float[] vector){
+        Note note = noteRepository.findById(noteId).orElseThrow(() -> new RuntimeException("Note not found : "+noteId));
+        note.setEmbedding(vector);
+        noteRepository.save(note);
+        System.out.println("Successfully updated the note : "+note.getId().toString());
+    }
+
+}
+
         /*
+        Inside patch
+
         Instead of
             Set<String> lol = new HashSet<>();
             lol = note.getTags();
@@ -127,4 +139,3 @@ public class NoteService {
 
             .orElseGet(...): This only runs if the box is Empty. It provides a fallback (creating a new Note)
          */
-}

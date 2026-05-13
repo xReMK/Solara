@@ -77,4 +77,6 @@ public class Note{
     }
     public int getImportance(){ return importance;}
     public void setImportance(int importance){ this.importance = importance; }
+    public float[] getEmbedding(){ return embedding;}
+    public void setEmbedding(float[] embedding){ this.embedding = embedding; }
 }

@@ -11,10 +11,13 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class NoteResponseConsumer {
 
+    private final NoteService noteService;
+
     @KafkaListener(topics = "embeddings-response")
     public void consume(EmbeddingResponse response){
         System.out.println("Received embeddings for note : "+response.getNoteId()+" embeddings : "+ Arrays.toString(response.getVectors()));
 
         // call to save/update embeddings to postgres
+        noteService.updateNoteVector(response.getNoteId(),response.getVectors());
     }
 }
