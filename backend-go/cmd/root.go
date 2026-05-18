@@ -35,6 +35,7 @@ var (
 	updateRemoveTags []string
 	updateContent    string
 	updateImportance string
+	filePath         string
 )
 
 type program struct {
@@ -361,6 +362,79 @@ func listenToResponse(conn net.Conn) {
 	}
 }
 
+var readCmd = &cobra.Command{
+	Use:   "read",
+	Short: "Parses a JSON file of notes and posts them to the backend service",
+	Long:  `Reads a JSON array from a specified file path, parses each note object, and executes a synchronous HTTP POST request per note to the Spring backend.`,
+	Args:  cobra.ArbitraryArgs,
+	RunE:  readFile,
+}
+
+func readFile(cmd *cobra.Command, args []string) error {
+	// Open file using os package descriptor
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file path: %w", err)
+	}
+	defer file.Close()
+
+	// Stream-decode the JSON array into memory
+	var notesList []models.NoteAddRequest
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&notesList); err != nil {
+		return fmt.Errorf("failed to decode JSON structure: %w", err)
+	}
+
+	// Establish a single persistent connection over the Named Pipe
+	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
+	if err != nil {
+		return fmt.Errorf("error: Daemon not running (%w)", err)
+	}
+	defer conn.Close()
+
+	// Reusing a single scanner avoids the read-ahead buffer issue across loops
+	scanner := bufio.NewScanner(conn)
+	fmt.Printf("Found %d notes. Initiating sync via named pipe...\n", len(notesList))
+
+	for i, note := range notesList {
+		payload, err := json.Marshal(note)
+		if err != nil {
+			fmt.Printf("[%d/%d] Skipping note due to marshal error: %v\n", i+1, len(notesList), err)
+			continue
+		}
+
+		envelope := models.Envelope{
+			Action:  models.ActionAdd,
+			Payload: payload,
+		}
+
+		finalBytes, err := json.Marshal(envelope)
+		if err != nil {
+			fmt.Printf("[%d/%d] Skipping note due to envelope marshal error: %v\n", i+1, len(notesList), err)
+			continue
+		}
+
+		// Push envelope line down the pipe with \n delimiter for daemon scanner
+		_, err = fmt.Fprintln(conn, string(finalBytes))
+		if err != nil {
+			return fmt.Errorf("pipe write failure at index %d: %w", i, err)
+		}
+
+		// Read synchronous acknowledgment back from the daemon line loop
+		if scanner.Scan() {
+			fmt.Printf("[%d/%d] Note ID: %s -> %s\n", i+1, len(notesList), note.Id, scanner.Text())
+		} else {
+			if err := scanner.Err(); err != nil {
+				return fmt.Errorf("pipe connection broken during execution scan: %w", err)
+			}
+			return fmt.Errorf("daemon prematurely terminated connection tracking loop")
+		}
+	}
+
+	fmt.Println("Ingestion execution finished.")
+	return nil
+}
+
 /*
 How cmd.Flags().Changed() Works
 	In Cobra, every flag has a default value
@@ -393,6 +467,7 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(readCmd)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")
@@ -401,4 +476,6 @@ func init() {
 	updateCmd.Flags().StringSliceVarP(&updateRemoveTags, "remove-tags", "r", []string{}, "Removing tags of an existing note")
 	updateCmd.Flags().StringVarP(&updateContent, "content", "c", "", "Update note content")
 	updateCmd.Flags().StringVarP(&updateImportance, "imp", "i", "", "Update importance level (*, **, or ***)")
+	readCmd.Flags().StringVarP(&filePath, "file", "f", "", "Absolute or relative file path to target JSON file")
+	_ = readCmd.MarkFlagRequired("file")
 }

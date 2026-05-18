@@ -1,0 +1,31 @@
+research_task:
+  description: >
+    Conduct a deep-dive investigation into the core technical, historical, or systemic 
+    elements of the topic: {topic}. Accumulate enough deep material to support the extraction 
+    of numerous non-overlapping insights.
+  expected_output: >
+    A comprehensive, highly detailed research document breaking down the core principles of the topic.
+  agent: note_researcher
+
+parsing_task:
+  description: >
+    Review the comprehensive research output from the research_task. Extract independent, 
+    non-overlapping factual points. For each factual point, generate between 1 to 4 highly relevant, 
+    lowercase lookup tags.
+  expected_output: >
+    A raw list of facts, where each entry explicitly includes its extracted data payload and its 
+    associated tags list.
+  agent: note_parser
+
+creation_task:
+  description: >
+    Take the facts and tags from parsing_task. Transform each entry into a valid JSON object matching the 
+    required schema. 
+    CRITICAL CONSTRAINTS:
+    1. The "content" string must be strictly 30 words or less. If it exceeds 30 words, compress the syntax.
+    2. The "tags" array must contain between 0 and 4 items.
+    3. Generate a unique RFC4122 UUIDv4 for the "id" field.
+    4. Set "createdAt" to "2026-05-18T15:53:25+05:30".
+  expected_output: >
+    A valid JSON array containing only the structured JSON objects. Do not wrap in markdown blocks.
+  agent: note_creator

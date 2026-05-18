@@ -37,12 +37,14 @@ public class NoteServiceProcessor {
 
         noteRequestPublisher.publishEmbeddingRequest(note.getId(),note.getContent());
 
+        /*
         try {
             Thread.sleep(10000);
             System.out.println("Background processing complete for: " + note.getId());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        */
     }
     /*
 

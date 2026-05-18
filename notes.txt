@@ -1,0 +1,30 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "content": "Learn vector embeddings for semantic search in PostgreSQL with pgvector.",
+  "importance": 2,
+  "tags": [
+    "embeddings",
+    "postgresql", 
+    "pgvector",
+    "java",
+    "spring-boot"
+  ],
+  "createdAt": "2026-04-28T14:30:00+05:30"
+}
+
+{
+    "model": "text-embedding-nomic-embed-text-v1.5",
+    "input": "Tell me the python joke in programming"
+}
+
+
+how many threads or @async can i use in spring? is there a limit?
+is there a way i can manually set these values?
+
+Wait—a quick tip for a Senior Dev: Since you are using Spring 4/6+ and Java 21, if you find yourself needing to coordinate many background tasks for the same event, consider if they should remain as separate listeners (decoupled) or if they should be orchestrated by a single "Coordinator" service to manage error handling more strictly
+
+
+Apache ZooKeeper is a centralized, open-source service for maintaining configuration information, naming, distributed synchronization, and group services for large distributed systems. It acts as a "coordinator" that enables distributed applications (like Apache Kafka and Hadoop) to share data, elect leaders, and manage node failures reliably, reducing the complexity of building distributed systems
+
+ctrl + shift + l : to select & replace occurrences of a word
+ctrl + shift + k : to delete a line

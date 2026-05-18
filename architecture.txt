@@ -92,6 +92,8 @@ You treat it as a local "Outbox" table: insert at receipt, delete after Spring s
 
 - MCP server + RAG(spatial databases)
 
+- 10000 notes is the sweet spot where the difference can be found when querying for notes from db vs rag 
+
 
 ___________________________________________________________________________________++++++++++++++++++  Springboot  +++++++++++++++++++++++__________________________________________________________________________________________________
 
@@ -114,6 +116,8 @@ knowledge graphs > RAG pipelines? what & why?
 how is an agent different from an ai workflow?
 
 mlops, aiops
+
+scheduled task for empty vectors
 
 
 ___________________________________________________________________________________++++++++++++++++++  pgadmin4  +++++++++++++++++++++++__________________________________________________________________________________________________
