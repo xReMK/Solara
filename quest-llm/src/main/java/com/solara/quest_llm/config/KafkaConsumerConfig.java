@@ -2,7 +2,7 @@ package com.solara.quest_llm.config;
 
 import com.solara.quest_llm.models.kafkaDto.requests.NoteEmbeddingRequest;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+//import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +11,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.mapping.DefaultJackson2JavaTypeMapper;
+//import org.springframework.kafka.support.mapping.DefaultJackson2JavaTypeMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,36 +24,21 @@ public class KafkaConsumerConfig {
     private String bootstrapServers;
 
     @Bean
-    public ConsumerFactory<String, NoteEmbeddingRequest> consumerFactory() {
+    public ConsumerFactory<String, String> stringConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "quest-embedding-group");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "mnote-core-group");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class); // Read plain strings
 
-        // Use this constructor to avoid the "abstract" instantiation error
-        JsonDeserializer<NoteEmbeddingRequest> payloadDeserializer = new JsonDeserializer<>(NoteEmbeddingRequest.class, false);
-        payloadDeserializer.addTrustedPackages("*");
-
-        // Manual Type Mapping to handle different packages
-        Map<String, Class<?>> mappings = new HashMap<>();
-        mappings.put("embedding_req", NoteEmbeddingRequest.class);
-
-        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-        typeMapper.setIdClassMapping(mappings);
-        payloadDeserializer.setTypeMapper(typeMapper);
-
-        return new DefaultKafkaConsumerFactory<>(
-                props,
-                new StringDeserializer(),
-                payloadDeserializer
-        );
+        return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, NoteEmbeddingRequest> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, NoteEmbeddingRequest> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
+    public ConcurrentKafkaListenerContainerFactory<String, String> stringKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(stringConsumerFactory());
         return factory;
     }
 }

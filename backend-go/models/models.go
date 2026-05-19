@@ -51,6 +51,7 @@ const (
 	ActionUpdate CommandType = "UPDATE"
 	ActionDelete CommandType = "DELETE"
 	ActionList   CommandType = "LIST"
+	ActionAsk    CommandType = "ASK"
 )
 
 type Envelope struct {

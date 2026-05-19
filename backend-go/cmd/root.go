@@ -435,6 +435,47 @@ func readFile(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+var askCmd = &cobra.Command{
+	Use:   "ask [question]",
+	Short: "Query mnote knowledge base using semantic vector search",
+	Args:  cobra.MinimumNArgs(1),
+	RunE:  askCmdRun,
+}
+
+func askCmdRun(cmd *cobra.Command, args []string) error {
+	question := strings.Join(args, " ")
+
+	conn, err := winio.DialPipe(`\\.\pipe\mnote_pipe`, nil)
+	if err != nil {
+		return fmt.Errorf("daemon not running: %w", err)
+	}
+	defer conn.Close()
+
+	// Construct payload matching models.Envelope
+	payloadMap := map[string]string{"query": question}
+	payloadBytes, _ := json.Marshal(payloadMap)
+
+	// Hardcoded ActionAsk for AI generation pipelines
+	envelope := map[string]interface{}{
+		"action":  "ASK",
+		"payload": payloadBytes,
+	}
+
+	finalBytes, err := json.Marshal(envelope)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(conn, string(finalBytes))
+
+	// Stream the structural response string back line-by-line
+	scanner := bufio.NewScanner(conn)
+	if scanner.Scan() {
+		fmt.Printf("\n--- Response ---\n%s\n", scanner.Text())
+	}
+	return nil
+}
+
 /*
 How cmd.Flags().Changed() Works
 	In Cobra, every flag has a default value
@@ -468,6 +509,7 @@ func init() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(readCmd)
+	rootCmd.AddCommand(askCmd)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addCmd.Flags().StringSliceVarP(&tagList, "tags", "t", []string{}, "Tags for the note (e.g. #work #todo)")

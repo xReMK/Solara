@@ -77,6 +77,9 @@ func (nm *NoteManager) ProcessNote(env models.Envelope) (string, error) {
 	case models.ActionList:
 		msg, err = nm.SendToSpring("GET", "/api/notes", nil)
 
+	case models.ActionAsk:
+		msg, err = nm.SendToSpring("GET", "/api/ask", nil)
+
 	default:
 		return "", fmt.Errorf("unknown action: %s", env.Action)
 	}
