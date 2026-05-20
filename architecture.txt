@@ -137,6 +137,8 @@ ALTER TABLE notes ADD COLUMN embedding vector(768);
 
    ___________________________________________________________________________________++++++++++++++++++  go  +++++++++++++++++++++++__________________________________________________________________________________________________
    
+commands:
+	mnote read -f /path/to/notes_json.txt
 
 func (p *program) springWorker() {
 	for note := range p.queue {

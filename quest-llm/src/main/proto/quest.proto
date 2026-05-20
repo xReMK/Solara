@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.mnote.quest.grpc";
+option java_outer_classname = "QuestProto";
+
+package quest;
+
+// The service definition
+service QuestService {
+  // Call 1: Unary RPC to fetch embeddings for a text string
+  rpc GetQueryEmbedding (EmbeddingRequest) returns (EmbeddingResponse);
+}
+
+// Request payload containing the raw search string
+message EmbeddingRequest {
+  string text = 1;
+}
+
+// Response payload containing the 768-dimension vector
+message EmbeddingResponse {
+  repeated float embedding = 1;
+}
